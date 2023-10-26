@@ -6,7 +6,7 @@
 
     <groupId>com.kay</groupId>
     <artifactId>file-storage-starter</artifactId>
-    <version>${spring-boot-version</version>
+    <version>${spring-boot-version}</version>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
