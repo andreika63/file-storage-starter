@@ -45,8 +45,8 @@ public class PersistenceConfig {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
         dataSource.setDriverClassName("org.h2.Driver");
         dataSource.setUrl("jdbc:h2:file:%s/h2database".formatted(properties.getPath()));
-        dataSource.setUsername("root");
-        dataSource.setPassword("root");
+        dataSource.setUsername(properties.getH2User());
+        dataSource.setPassword(properties.getH2Password());
         return dataSource;
     }
 
