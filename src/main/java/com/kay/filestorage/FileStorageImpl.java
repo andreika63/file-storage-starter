@@ -8,7 +8,10 @@ import org.apache.commons.io.IOUtils;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.concurrent.locks.ReentrantLock;
 
 
@@ -66,13 +69,7 @@ public class FileStorageImpl implements FileStorage {
         ) {
             lock.unlock();
             long size = IOUtils.copyLarge(storageFileDto.getInputStream(), out);
-            return StorageFileDto.of(() -> {
-                        try {
-                            return new BufferedInputStream(new FileInputStream(file));
-                        } catch (FileNotFoundException e) {
-                            throw new FileStorageException(e.getMessage());
-                        }
-                    })
+            return StorageFileDto.of(file.getPath())
                     .path(file.getPath())
                     .size(size);
         } catch (IOException e) {

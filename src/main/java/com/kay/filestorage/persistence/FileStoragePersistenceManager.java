@@ -11,7 +11,7 @@ public interface FileStoragePersistenceManager {
 
     String getPath(Long fileId);
 
-    List<String> getDeleted(Duration retentionInterval);
+    List<StorageFileDto> getDeleted(Duration retentionInterval);
 
     void markDeleted(Long fileId);
 

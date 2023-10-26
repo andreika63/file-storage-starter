@@ -37,8 +37,19 @@ public class PersistenceManagerImpl implements FileStoragePersistenceManager {
 
     @Transactional
     @Override
-    public List<String> getDeleted(Duration retentionInterval) {
-        return repository.getDeleted(Instant.now().minus(retentionInterval));
+    public List<StorageFileDto> getDeleted(Duration retentionInterval) {
+        return repository.getDeleted(Instant.now().minus(retentionInterval))
+                .stream()
+                .map(storageFile -> StorageFileDto.of(storageFile.getPath())
+                        .id(storageFile.getId())
+                        .path(storageFile.getPath())
+                        .name(storageFile.getName())
+                        .size(storageFile.getSize())
+                        .mediaType(storageFile.getMediaType())
+                        .created(storageFile.getCreated())
+                        .deleted(storageFile.getDeleted())
+                )
+                .toList();
     }
 
     @Transactional

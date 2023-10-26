@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.io.File;
 import java.nio.file.DirectoryNotEmptyException;
@@ -32,16 +31,16 @@ public class CleanupService implements ApplicationRunner {
     public void run(ApplicationArguments args) throws Exception {
         Flux.interval(properties.getCleanupInterval())
                 .doOnNext(n -> cleanup(properties.getRetentionInterval()))
-                .doOnError(th -> log.error(th.getMessage(), th))
-                .onErrorResume(th -> Mono.empty())
+                .onErrorContinue((th, o) -> log.error(th.getMessage(), th))
                 .subscribe();
     }
 
     public void cleanup(Duration retentionInterval) {
         log.info("starting cleanup...");
         int count = 0;
-        for (String path : persistenceManager.getDeleted(retentionInterval)) {
-            removeFileFromDisk(path);
+        for (StorageFileDto dto : persistenceManager.getDeleted(retentionInterval)) {
+            persistenceManager.delete(dto.getId());
+            removeFileFromDisk(dto.getPath());
             count++;
         }
         log.info("cleaned up {} files", count);

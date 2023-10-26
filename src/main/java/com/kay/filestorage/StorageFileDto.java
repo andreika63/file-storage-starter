@@ -1,7 +1,10 @@
 package com.kay.filestorage;
 
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.util.Date;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -17,9 +20,9 @@ public class StorageFileDto {
 
     private String mediaType;
 
-    private Date created;
+    private Instant created;
 
-    private Date deleted;
+    private Instant deleted;
 
     private Supplier<InputStream> inputStreamSupplier;
 
@@ -27,6 +30,19 @@ public class StorageFileDto {
         Objects.requireNonNull(inputStreamSupplier);
         StorageFileDto storageFileDto = new StorageFileDto();
         storageFileDto.inputStreamSupplier = inputStreamSupplier;
+        return storageFileDto;
+    }
+
+    public static StorageFileDto of(String path) {
+        Objects.requireNonNull(path);
+        StorageFileDto storageFileDto = new StorageFileDto();
+        storageFileDto.inputStreamSupplier = () -> {
+            try {
+                return new BufferedInputStream(new FileInputStream(path));
+            } catch (FileNotFoundException e) {
+                throw new FileStorageException(e.getMessage());
+            }
+        };
         return storageFileDto;
     }
 
@@ -78,20 +94,20 @@ public class StorageFileDto {
         return this;
     }
 
-    public Date getCreated() {
+    public Instant getCreated() {
         return created;
     }
 
-    public StorageFileDto created(Date created) {
+    public StorageFileDto created(Instant created) {
         this.created = created;
         return this;
     }
 
-    public Date getDeleted() {
+    public Instant getDeleted() {
         return deleted;
     }
 
-    public StorageFileDto deleted(Date deleted) {
+    public StorageFileDto deleted(Instant deleted) {
         this.deleted = deleted;
         return this;
     }
