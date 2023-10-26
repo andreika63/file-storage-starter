@@ -5,7 +5,7 @@ import com.kay.filestorage.StorageFileDto;
 import java.time.Duration;
 import java.util.List;
 
-public interface PersistenceManager {
+public interface FileStoragePersistenceManager {
 
     StorageFileDto persist(StorageFileDto storageFileDto);
 

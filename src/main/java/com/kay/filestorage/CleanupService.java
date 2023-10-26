@@ -1,7 +1,7 @@
 package com.kay.filestorage;
 
 import com.kay.filestorage.config.FileStorageProperties;
-import com.kay.filestorage.persistence.PersistenceManager;
+import com.kay.filestorage.persistence.FileStoragePersistenceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -19,10 +19,10 @@ public class CleanupService implements ApplicationRunner {
 
     private final FileStorageProperties properties;
     private final Logger log = LoggerFactory.getLogger(getClass());
-    private final PersistenceManager persistenceManager;
+    private final FileStoragePersistenceManager persistenceManager;
     private final ReentrantLock lock;
 
-    public CleanupService(FileStorageProperties properties, PersistenceManager persistenceManager, ReentrantLock lock) {
+    public CleanupService(FileStorageProperties properties, FileStoragePersistenceManager persistenceManager, ReentrantLock lock) {
         this.properties = properties;
         this.persistenceManager = persistenceManager;
         this.lock = lock;

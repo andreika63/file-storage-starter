@@ -4,7 +4,7 @@ import com.kay.filestorage.CleanupService;
 import com.kay.filestorage.FileStorage;
 import com.kay.filestorage.FileStorageImpl;
 import com.kay.filestorage.path.*;
-import com.kay.filestorage.persistence.PersistenceManager;
+import com.kay.filestorage.persistence.FileStoragePersistenceManager;
 import com.kay.filestorage.persistence.PersistenceManagerImpl;
 import com.kay.filestorage.persistence.StorageFileRepository;
 import com.kay.filestorage.persistence.TxHelper;
@@ -15,7 +15,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import java.io.File;
 import java.time.LocalDateTime;
@@ -25,9 +24,10 @@ import java.util.concurrent.locks.ReentrantLock;
 @Configuration
 @PropertySource(value = "classpath:/file-storage.properties")
 @EnableConfigurationProperties(FileStorageProperties.class)
-@EnableJpaRepositories
 @Import(PersistenceConfig.class)
 public class FileStorageAutoConfig {
+
+    public static final String PERSISTENCE_MANAGER = "fileStoragePersistenceManager";
 
     @ConditionalOnMissingBean
     @Bean
@@ -57,25 +57,25 @@ public class FileStorageAutoConfig {
             , CleanupService cleanupService
             , FileStorageProperties properties
             , ReentrantLock lock
-            , PersistenceManager persistenceManager
+            , FileStoragePersistenceManager persistenceManager
     ) {
         return new FileStorageImpl(fileGenerator, cleanupService, properties, lock, persistenceManager);
     }
 
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(name = PERSISTENCE_MANAGER)
     @Bean
-    PersistenceManager persistenceManager(StorageFileRepository repository) {
+    FileStoragePersistenceManager persistenceManager(StorageFileRepository repository) {
         return new PersistenceManagerImpl(repository);
     }
 
     @Bean
-    CleanupService cleanupService(FileStorageProperties properties, PersistenceManager persistenceManager, ReentrantLock lock) {
+    CleanupService cleanupService(FileStorageProperties properties, FileStoragePersistenceManager persistenceManager, ReentrantLock lock) {
         return new CleanupService(properties, persistenceManager, lock);
     }
 
     @Bean
-    public TxHelper txHelper(ApplicationContext ctx) {
-        return TxHelper.getInstance(ctx);
+    public TxHelper fileStorageTxHelper(ApplicationContext ctx) {
+        return TxHelper.getInstance(ctx, "fileStorageTxHelper");
     }
 
     @Bean

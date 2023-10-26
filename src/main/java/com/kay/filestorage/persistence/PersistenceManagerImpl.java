@@ -7,7 +7,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
-public class PersistenceManagerImpl implements PersistenceManager {
+public class PersistenceManagerImpl implements FileStoragePersistenceManager {
 
     private final StorageFileRepository repository;
 

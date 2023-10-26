@@ -7,7 +7,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
@@ -18,12 +17,11 @@ public class TxHelper {
     protected TxHelper() {
     }
 
-    public static TxHelper getInstance(ApplicationContext ctx) {
+    public static TxHelper getInstance(ApplicationContext ctx, String beanName) {
         synchronized (TxHelper.class) {
             if (txHelper != null) {
                 return txHelper;
             }
-            String beanName = "TxHelper-%s".formatted(UUID.randomUUID().toString());
             Object instance = ctx.getAutowireCapableBeanFactory().applyBeanPostProcessorsAfterInitialization(new TxHelper(), beanName);
             txHelper = (TxHelper) instance;
             return txHelper;

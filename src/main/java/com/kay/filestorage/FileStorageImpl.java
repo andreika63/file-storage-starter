@@ -2,7 +2,7 @@ package com.kay.filestorage;
 
 import com.kay.filestorage.config.FileStorageProperties;
 import com.kay.filestorage.path.FileGenerator;
-import com.kay.filestorage.persistence.PersistenceManager;
+import com.kay.filestorage.persistence.FileStoragePersistenceManager;
 import com.kay.filestorage.persistence.TxHelper;
 import org.apache.commons.io.IOUtils;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,14 +18,14 @@ public class FileStorageImpl implements FileStorage {
     private final CleanupService cleanupService;
     private final FileStorageProperties properties;
     private final ReentrantLock lock;
-    private final PersistenceManager persistenceManager;
+    private final FileStoragePersistenceManager persistenceManager;
 
 
     public FileStorageImpl(FileGenerator fileGenerator
             , CleanupService cleanupService
             , FileStorageProperties properties
             , ReentrantLock lock
-            , PersistenceManager persistenceManager
+            , FileStoragePersistenceManager persistenceManager
     ) {
         this.fileGenerator = fileGenerator;
         this.cleanupService = cleanupService;

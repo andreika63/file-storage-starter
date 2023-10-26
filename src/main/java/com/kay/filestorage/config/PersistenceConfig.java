@@ -1,6 +1,5 @@
 package com.kay.filestorage.config;
 
-import com.kay.filestorage.persistence.PersistenceManager;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,12 +20,11 @@ import java.util.HashMap;
         transactionManagerRef = "storageTransactionManager"
 )
 
-@ConditionalOnMissingBean(PersistenceManager.class)
+@ConditionalOnMissingBean(name = FileStorageAutoConfig.PERSISTENCE_MANAGER)
 public class PersistenceConfig {
 
     public static final String pakage = "com.kay.filestorage.persistence";
 
-    @ConditionalOnMissingBean
     @Bean
     public LocalContainerEntityManagerFactoryBean storageEntityManager(DataSource dataSource) {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
@@ -41,12 +39,10 @@ public class PersistenceConfig {
         return em;
     }
 
-    @ConditionalOnMissingBean
     @Bean
-    public DataSource userDataSource(FileStorageProperties properties) {
+    public DataSource storageDataSource(FileStorageProperties properties) {
 
-        DriverManagerDataSource dataSource
-                = new DriverManagerDataSource();
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
         dataSource.setDriverClassName("org.h2.Driver");
         dataSource.setUrl("jdbc:h2:file:%s/h2database".formatted(properties.getPath()));
         dataSource.setUsername("root");
@@ -54,7 +50,6 @@ public class PersistenceConfig {
         return dataSource;
     }
 
-    @ConditionalOnMissingBean
     @Bean
     public PlatformTransactionManager storageTransactionManager(DataSource dataSource) {
         JpaTransactionManager transactionManager = new JpaTransactionManager();
