@@ -12,6 +12,8 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.time.Duration;
+import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 
 
@@ -50,13 +52,46 @@ public class FileStorageImpl implements FileStorage {
     }
 
     @Override
-    public void deleteFile(Long fileId) {
-        persistenceManager.markDeleted(fileId);
+    public StorageFileDto getFile(Long fileId) {
+        return persistenceManager.getFile(fileId);
     }
 
     @Override
-    public void cleanup() {
-        cleanupService.cleanup(properties.getRetentionInterval());
+    public void deleteFile(Long fileId) {
+        if (properties.getRetentionInterval().isZero()) {
+            StorageFileDto file = persistenceManager.getFile(fileId);
+            persistenceManager.delete(file.getId());
+            cleanupService.removeFileFromDisk(file.getPath());
+        } else {
+            persistenceManager.markDeleted(fileId);
+        }
+    }
+
+    @Override
+    public int cleanup(Duration retentionInterval) {
+        Objects.requireNonNull(retentionInterval);
+        return cleanupService.cleanup(retentionInterval);
+    }
+
+    @Override
+    public Duration getCleanupInterval() {
+        return properties.getCleanupInterval();
+    }
+
+    @Override
+    public void setCleanupInterval(Duration cleanupInterval) {
+        properties.setCleanupInterval(cleanupInterval != null ? cleanupInterval : Duration.ZERO);
+        cleanupService.init();
+    }
+
+    @Override
+    public Duration getRetentionInterval() {
+        return properties.getRetentionInterval();
+    }
+
+    @Override
+    public void setRetentionInterval(Duration retentionInterval) {
+        properties.setRetentionInterval(retentionInterval != null ? retentionInterval : Duration.ZERO);
     }
 
     private StorageFileDto writeToDisk(StorageFileDto storageFileDto) {
@@ -69,7 +104,7 @@ public class FileStorageImpl implements FileStorage {
         ) {
             lock.unlock();
             long size = IOUtils.copyLarge(storageFileDto.getInputStream(), out);
-            return StorageFileDto.of(file.getPath())
+            return storageFileDto
                     .path(file.getPath())
                     .size(size);
         } catch (IOException e) {

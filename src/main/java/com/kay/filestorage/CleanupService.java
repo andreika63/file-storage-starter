@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 
 import java.io.File;
@@ -20,22 +21,24 @@ public class CleanupService implements ApplicationRunner {
     private final Logger log = LoggerFactory.getLogger(getClass());
     private final FileStoragePersistenceManager persistenceManager;
     private final ReentrantLock lock;
+    private final Flux<Long> cleanupFlux;
+    private Disposable disposable;
 
     public CleanupService(FileStorageProperties properties, FileStoragePersistenceManager persistenceManager, ReentrantLock lock) {
         this.properties = properties;
         this.persistenceManager = persistenceManager;
         this.lock = lock;
+        cleanupFlux = Flux.interval(properties.getCleanupInterval())
+                .doOnNext(n -> cleanup(properties.getRetentionInterval()))
+                .onErrorContinue((th, o) -> log.error(th.getMessage(), th));
     }
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        Flux.interval(properties.getCleanupInterval())
-                .doOnNext(n -> cleanup(properties.getRetentionInterval()))
-                .onErrorContinue((th, o) -> log.error(th.getMessage(), th))
-                .subscribe();
+        init();
     }
 
-    public void cleanup(Duration retentionInterval) {
+    protected int cleanup(Duration retentionInterval) {
         log.info("starting cleanup...");
         int count = 0;
         for (StorageFileDto dto : persistenceManager.getDeleted(retentionInterval)) {
@@ -44,6 +47,7 @@ public class CleanupService implements ApplicationRunner {
             count++;
         }
         log.info("cleaned up {} files", count);
+        return count;
     }
 
     protected void removeFileFromDisk(String path) {
@@ -64,5 +68,20 @@ public class CleanupService implements ApplicationRunner {
             }
         }
         lock.unlock();
+    }
+
+    protected synchronized void init() {
+        if (isSchedulerActive()) {
+            disposable.dispose();
+            log.info("Cleanup scheduler stopped");
+        }
+        if (!properties.getRetentionInterval().isZero() && !properties.getCleanupInterval().isZero()) {
+            disposable = cleanupFlux.subscribe();
+            log.info("Cleanup scheduler started (CleanupInterval = %s)".formatted(properties.getCleanupInterval()));
+        }
+    }
+
+    protected boolean isSchedulerActive() {
+        return disposable != null && !disposable.isDisposed();
     }
 }

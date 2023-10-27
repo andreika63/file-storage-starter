@@ -9,7 +9,7 @@ public interface FileStoragePersistenceManager {
 
     StorageFileDto persist(StorageFileDto storageFileDto);
 
-    String getPath(Long fileId);
+    StorageFileDto getFile(Long fileId);
 
     List<StorageFileDto> getDeleted(Duration retentionInterval);
 

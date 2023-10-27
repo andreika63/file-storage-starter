@@ -1,5 +1,6 @@
 package com.kay.filestorage.persistence;
 
+import com.kay.filestorage.FileStorageException;
 import com.kay.filestorage.StorageFileDto;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,21 +19,23 @@ public class PersistenceManagerImpl implements FileStoragePersistenceManager {
     @Transactional
     @Override
     public StorageFileDto persist(StorageFileDto dto) {
+        Instant now = Instant.now();
         StorageFile storageFile = new StorageFile();
         storageFile.setPath(dto.getPath());
         storageFile.setName(dto.getName());
         storageFile.setSize(dto.getSize());
         storageFile.setMediaType(dto.getMediaType());
-        storageFile.setCreated(Instant.now());
+        storageFile.setCreated(now);
         repository.save(storageFile);
-        return dto.id(storageFile.getId());
+        return dto.id(storageFile.getId())
+                .created(now);
     }
 
     @Transactional
     @Override
-    public String getPath(Long fileId) {
-        return repository.getReferenceById(fileId)
-                .getPath();
+    public StorageFileDto getFile(Long fileId) {
+       return toDto(getById(fileId));
+
     }
 
     @Transactional
@@ -40,22 +43,14 @@ public class PersistenceManagerImpl implements FileStoragePersistenceManager {
     public List<StorageFileDto> getDeleted(Duration retentionInterval) {
         return repository.getDeleted(Instant.now().minus(retentionInterval))
                 .stream()
-                .map(storageFile -> StorageFileDto.of(storageFile.getPath())
-                        .id(storageFile.getId())
-                        .path(storageFile.getPath())
-                        .name(storageFile.getName())
-                        .size(storageFile.getSize())
-                        .mediaType(storageFile.getMediaType())
-                        .created(storageFile.getCreated())
-                        .deleted(storageFile.getDeleted())
-                )
+                .map(this::toDto)
                 .toList();
     }
 
     @Transactional
     @Override
     public void markDeleted(Long fileId) {
-        StorageFile storageFile = repository.getReferenceById(fileId);
+        StorageFile storageFile = getById(fileId);
         storageFile.setDeleted(Instant.now());
     }
 
@@ -63,5 +58,22 @@ public class PersistenceManagerImpl implements FileStoragePersistenceManager {
     @Override
     public void delete(Long fileId) {
         repository.deleteById(fileId);
+    }
+
+    private StorageFileDto toDto(StorageFile storageFile) {
+        return  StorageFileDto.of(storageFile.getPath())
+                .id(storageFile.getId())
+                .path(storageFile.getPath())
+                .name(storageFile.getName())
+                .size(storageFile.getSize())
+                .mediaType(storageFile.getMediaType())
+                .created(storageFile.getCreated())
+                .deleted(storageFile.getDeleted());
+    }
+
+    private StorageFile getById(Long fileId) {
+        return repository.findById(fileId)
+                .orElseThrow(() -> new FileStorageException("File id=%s not found".formatted(fileId)));
+
     }
 }
