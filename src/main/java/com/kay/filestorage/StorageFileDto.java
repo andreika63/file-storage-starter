@@ -1,9 +1,6 @@
 package com.kay.filestorage;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
+import java.io.*;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -30,6 +27,13 @@ public class StorageFileDto {
         Objects.requireNonNull(inputStreamSupplier);
         StorageFileDto storageFileDto = new StorageFileDto();
         storageFileDto.inputStreamSupplier = inputStreamSupplier;
+        return storageFileDto;
+    }
+
+    public static StorageFileDto of(byte[] bytes) {
+        Objects.requireNonNull(bytes);
+        StorageFileDto storageFileDto = new StorageFileDto();
+        storageFileDto.inputStreamSupplier = () -> new ByteArrayInputStream(bytes);
         return storageFileDto;
     }
 

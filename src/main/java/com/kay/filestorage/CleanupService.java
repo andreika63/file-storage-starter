@@ -68,6 +68,7 @@ public class CleanupService implements ApplicationRunner {
             }
         }
         lock.unlock();
+        log.debug("removed file: %s".formatted(path));
     }
 
     protected synchronized void init() {

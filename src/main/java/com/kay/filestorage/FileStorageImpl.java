@@ -5,6 +5,8 @@ import com.kay.filestorage.path.FileGenerator;
 import com.kay.filestorage.persistence.FileStoragePersistenceManager;
 import com.kay.filestorage.persistence.TxHelper;
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 
@@ -19,6 +21,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class FileStorageImpl implements FileStorage {
 
+    private final Logger log = LoggerFactory.getLogger(getClass());
     private final FileGenerator fileGenerator;
     private final CleanupService cleanupService;
     private final FileStorageProperties properties;
@@ -46,6 +49,8 @@ public class FileStorageImpl implements FileStorage {
         TxHelper.afterCompletion(status -> {
             if (TransactionSynchronization.STATUS_COMMITTED != status) {
                 cleanupService.removeFileFromDisk(result.getPath());
+            } else {
+                log.debug("created fileId[%s] path[%s]".formatted(result.getId(), result.getPath()));
             }
         });
         return persistenceManager.persist(result);
@@ -64,6 +69,7 @@ public class FileStorageImpl implements FileStorage {
             cleanupService.removeFileFromDisk(file.getPath());
         } else {
             persistenceManager.markDeleted(fileId);
+            log.debug("markDeleted fileId=%s".formatted(fileId));
         }
     }
 
