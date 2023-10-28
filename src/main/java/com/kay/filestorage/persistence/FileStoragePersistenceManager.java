@@ -16,4 +16,6 @@ public interface FileStoragePersistenceManager {
     void markDeleted(Long fileId);
 
     void delete(Long fileId);
+
+    StorageFileDto restore(Long fileId);
 }

@@ -60,6 +60,14 @@ public class PersistenceManagerImpl implements FileStoragePersistenceManager {
         repository.deleteById(fileId);
     }
 
+    @Transactional
+    @Override
+    public StorageFileDto restore(Long fileId) {
+        StorageFile storageFile = getById(fileId);
+        storageFile.setDeleted(null);
+        return toDto(storageFile);
+    }
+
     private StorageFileDto toDto(StorageFile storageFile) {
         return  StorageFileDto.of(storageFile.getPath())
                 .id(storageFile.getId())

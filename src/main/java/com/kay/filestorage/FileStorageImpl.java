@@ -16,6 +16,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 
 
@@ -58,19 +59,28 @@ public class FileStorageImpl implements FileStorage {
 
     @Override
     public StorageFileDto getFile(Long fileId) {
-        return persistenceManager.getFile(fileId);
+        return Optional.ofNullable(persistenceManager.getFile(fileId))
+                .filter(storageFile -> storageFile.getDeleted() == null)
+                .orElseThrow(() -> new FileStorageException("File id=%s not found".formatted(fileId)));
     }
 
     @Override
     public void deleteFile(Long fileId) {
+        StorageFileDto file = getFile(fileId);
         if (properties.getRetentionInterval().isZero()) {
-            StorageFileDto file = persistenceManager.getFile(fileId);
             persistenceManager.delete(file.getId());
             cleanupService.removeFileFromDisk(file.getPath());
         } else {
             persistenceManager.markDeleted(fileId);
             log.debug("markDeleted fileId=%s".formatted(fileId));
         }
+    }
+
+    @Override
+    public StorageFileDto restoreFile(Long fileId) {
+        StorageFileDto restored = persistenceManager.restore(fileId);
+        log.debug("fileId=%s has been restored".formatted(fileId));
+        return restored;
     }
 
     @Override

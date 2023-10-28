@@ -10,6 +10,8 @@ public interface FileStorage {
 
     void deleteFile(Long fileId);
 
+    StorageFileDto restoreFile(Long fileId);
+
     int cleanup(Duration retentionInterval);
 
     Duration getCleanupInterval();

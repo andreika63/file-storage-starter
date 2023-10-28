@@ -48,9 +48,8 @@ public class FileStorageTest {
         Assertions.assertEquals(dto.getDeleted(), fromStorage.getDeleted());
     }
 
-
     @Test
-    public void delete() {
+    public void deleteAndRestore() {
         fileStorage.setRetentionInterval(Duration.ZERO);
         StorageFileDto dto = createFile();
         fileStorage.deleteFile(dto.getId());
@@ -61,7 +60,10 @@ public class FileStorageTest {
         StorageFileDto dto2 = createFile();
         fileStorage.deleteFile(dto2.getId());
         Assertions.assertTrue(new File(dto2.getPath()).exists());
-        Assertions.assertNotNull(fileStorage.getFile(dto2.getId()).getDeleted());
+        Assertions.assertThrows(FileStorageException.class, () -> fileStorage.getFile(dto2.getId()));
+
+        StorageFileDto restored = fileStorage.restoreFile(dto2.getId());
+        Assertions.assertNull(restored.getDeleted());
     }
 
     @Test
