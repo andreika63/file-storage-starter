@@ -10,10 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.Optional;
@@ -115,11 +112,12 @@ public class FileStorageImpl implements FileStorage {
         lock.lock();
         file.getParentFile().mkdirs();
         try (
+                InputStream inputStream = storageFileDto.getInputStream();
                 FileOutputStream fileOutputStream = new FileOutputStream(file);
                 BufferedOutputStream out = new BufferedOutputStream(fileOutputStream)
         ) {
             lock.unlock();
-            long size = IOUtils.copyLarge(storageFileDto.getInputStream(), out);
+            long size = IOUtils.copyLarge(inputStream, out);
             return storageFileDto
                     .path(file.getPath())
                     .size(size);
