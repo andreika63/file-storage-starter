@@ -12,10 +12,10 @@ public class FilePathTest {
 
     @Test
     public void pathTest() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime dateTime = LocalDateTime.of(2020, 1, 1, 0, 0);
         UUID uuid = UUID.randomUUID();
 
-        FileGenerator fileGenerator = LocalDateTimeFileGenerator.of(now)
+        FileGenerator fileGenerator = LocalDateTimeFileGenerator.of(dateTime)
                 .year()
                 .month()
                 .day()
@@ -23,10 +23,10 @@ public class FilePathTest {
                 .and(UuidFileGenerator.of(uuid));
 
         File file = fileGenerator.generate();
-        Assertions.assertEquals("./%s/%s/%s/%s/%s".formatted(now.getYear(), now.getMonthValue(), now.getDayOfMonth(), now.getHour(), uuid), file.getPath());
+        Assertions.assertEquals("./%s/%s".formatted("2020/01/01/00", uuid), file.getPath());
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM/dd");
-        fileGenerator = StringFileGenerator.of(() -> now.format(formatter));
-        Assertions.assertEquals("./%s-%s/%s".formatted(now.getYear(), now.getMonthValue(), now.getDayOfMonth()), fileGenerator.generate().getPath());
+        fileGenerator = StringFileGenerator.of(() -> dateTime.format(formatter));
+        Assertions.assertEquals("./%s-%s/%s".formatted("2020", "01", "01"), fileGenerator.generate().getPath());
     }
 }
