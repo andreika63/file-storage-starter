@@ -1,6 +1,7 @@
 package com.kay.filestorage.persistence;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
+
 import java.time.Instant;
 
 @Entity

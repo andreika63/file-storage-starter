@@ -2,18 +2,20 @@ package com.kay.filestorage.persistence;
 
 import com.kay.filestorage.FileStorageException;
 import com.kay.filestorage.StorageFileDto;
+import jakarta.persistence.EntityManager;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 public class PersistenceManagerImpl implements FileStoragePersistenceManager {
 
-    private final StorageFileRepository repository;
+    private final EntityManager entityManager;
 
-    public PersistenceManagerImpl(StorageFileRepository repository) {
-        this.repository = repository;
+    public PersistenceManagerImpl(EntityManager entityManager) {
+        this.entityManager = entityManager;
     }
 
     @Transactional
@@ -26,7 +28,7 @@ public class PersistenceManagerImpl implements FileStoragePersistenceManager {
         storageFile.setSize(dto.getSize());
         storageFile.setMediaType(dto.getMediaType());
         storageFile.setCreated(now);
-        repository.save(storageFile);
+        entityManager.persist(storageFile);
         return dto.id(storageFile.getId())
                 .created(now);
     }
@@ -41,9 +43,10 @@ public class PersistenceManagerImpl implements FileStoragePersistenceManager {
     @Transactional
     @Override
     public List<StorageFileDto> getDeleted(Duration retentionInterval) {
-        return repository.getDeleted(Instant.now().minus(retentionInterval))
-                .stream()
-                .map(this::toDto)
+        return entityManager.createQuery(
+                        "SELECT f FROM StorageFile f WHERE f.deleted < :keepAfter", StorageFile.class)
+                .setParameter("keepAfter", Instant.now().minus(retentionInterval))
+                .getResultStream().map(this::toDto)
                 .toList();
     }
 
@@ -57,7 +60,7 @@ public class PersistenceManagerImpl implements FileStoragePersistenceManager {
     @Transactional
     @Override
     public void delete(Long fileId) {
-        repository.deleteById(fileId);
+        entityManager.remove(entityManager.getReference(StorageFile.class, fileId));
     }
 
     @Transactional
@@ -80,8 +83,7 @@ public class PersistenceManagerImpl implements FileStoragePersistenceManager {
     }
 
     private StorageFile getById(Long fileId) {
-        return repository.findById(fileId)
+        return Optional.ofNullable(entityManager.find(StorageFile.class, fileId))
                 .orElseThrow(() -> new FileStorageException("File id=%s not found".formatted(fileId)));
-
     }
 }

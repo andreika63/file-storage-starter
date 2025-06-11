@@ -6,8 +6,8 @@ import com.kay.filestorage.FileStorageImpl;
 import com.kay.filestorage.path.*;
 import com.kay.filestorage.persistence.FileStoragePersistenceManager;
 import com.kay.filestorage.persistence.PersistenceManagerImpl;
-import com.kay.filestorage.persistence.StorageFileRepository;
 import com.kay.filestorage.persistence.TxHelper;
+import jakarta.persistence.EntityManager;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
@@ -24,7 +24,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @Configuration
 @PropertySource(value = "classpath:/file-storage.properties")
 @EnableConfigurationProperties(FileStorageProperties.class)
-@Import(PersistenceConfig.class)
+@Import(EmbeddedJpaFallbackConfig.class)
 public class FileStorageAutoConfig {
 
     public static final String PERSISTENCE_MANAGER = "fileStoragePersistenceManager";
@@ -62,12 +62,6 @@ public class FileStorageAutoConfig {
         return new FileStorageImpl(fileGenerator, cleanupService, properties, lock, persistenceManager);
     }
 
-    @ConditionalOnMissingBean(name = PERSISTENCE_MANAGER)
-    @Bean
-    FileStoragePersistenceManager persistenceManager(StorageFileRepository repository) {
-        return new PersistenceManagerImpl(repository);
-    }
-
     @Bean
     CleanupService cleanupService(FileStorageProperties properties, FileStoragePersistenceManager persistenceManager, ReentrantLock lock) {
         return new CleanupService(properties, persistenceManager, lock);
@@ -81,6 +75,12 @@ public class FileStorageAutoConfig {
     @Bean
     public ReentrantLock lock() {
         return new ReentrantLock(true);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(FileStoragePersistenceManager.class)
+    public FileStoragePersistenceManager defaultFileStoragePersistenceManager(EntityManager entityManager) {
+        return new PersistenceManagerImpl(entityManager);
     }
 
 }
