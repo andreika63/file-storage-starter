@@ -46,6 +46,9 @@ public class FileStorageTest {
         Assertions.assertEquals(dto.getMediaType(), fromStorage.getMediaType());
         Assertions.assertEquals(dto.getCreated(), fromStorage.getCreated());
         Assertions.assertEquals(dto.getDeleted(), fromStorage.getDeleted());
+
+        StorageFileDto fromStorage2 = fileStorage.getFile(dto.getId());
+        Assertions.assertEquals(fromStorage, fromStorage2);
     }
 
     @Test
